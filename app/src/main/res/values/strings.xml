@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">tp3</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="content_description">Character image</string>
 </resources>
