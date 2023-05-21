@@ -1,14 +1,17 @@
 package ort.tp3.activities
 
-import ort.tp3.adapters.CharacterAdapter
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import ort.tp3.R
+import ort.tp3.adapters.CharacterAdapter
+import ort.tp3.database.DatabaseSingleton
+import ort.tp3.helpers.PasswordEncryptor
 import ort.tp3.services.CharacterService
 import ort.tp3.services.CharactersWrapper
 import ort.tp3.services.RetrofitInstance
@@ -18,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CharacterAdapter
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,9 +33,26 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
-        CoroutineScope(Dispatchers.Main).launch {
+        coroutineScope.launch {
             fetchCharacters()
+            val user = DatabaseSingleton.db.userDao().getUserByEmail("jane@mail.com")
+
+            println(user)
+
+            // Test failed password:
+            var pass = user?.let { PasswordEncryptor.verify("password12", it.password) }
+
+            println("password failed: $pass")
+
+            pass = user?.let { PasswordEncryptor.verify("password123", it.password) }
+
+            println("password passed: $pass")
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        coroutineScope.cancel()
     }
 
     private suspend fun fetchCharacters() {
